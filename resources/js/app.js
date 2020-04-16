@@ -8,14 +8,28 @@ require("./bootstrap");
 
 window.Vue = require("vue");
 import { Form, HasError, AlertError } from "vform";
+import VueRouter from "vue-router";
+import moment from "moment";
+import VueProgressBar from "vue-progressbar";
+import Swal from "sweetalert2";
 
+//globals
 window.Form = Form;
+window.Swal = Swal;
 Vue.component(HasError.name, HasError);
 Vue.component(AlertError.name, AlertError);
-
-import VueRouter from "vue-router";
 Vue.use(VueRouter);
 
+//filters
+Vue.filter("upText", function(text) {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+});
+
+Vue.filter("formattedDate", function(date) {
+    return moment().format("MMMM Do YYYY", date);
+});
+
+//routes
 let routes = [
     {
         path: "/dashboard",
@@ -33,6 +47,39 @@ const router = new VueRouter({
     routes, // short for `routes: routes
     linkActiveClass: "active"
 });
+
+//progress bar
+Vue.use(VueProgressBar, {
+    color: "rgb(143, 255, 199)",
+    failedColor: "#FF5252",
+    height: "20px"
+});
+
+//sweetalert
+const Toast = Swal.mixin({
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    onOpen: toast => {
+        toast.addEventListener("mouseenter", Swal.stopTimer);
+        toast.addEventListener("mouseleave", Swal.resumeTimer);
+    }
+});
+window.Toast = Toast;
+
+const Confirm = Swal.mixin({
+    customClass: {
+        confirmButton: "btn btn-success",
+        cancelButton: "btn btn-danger mr-2"
+    },
+    buttonsStyling: false
+});
+window.Confirm = Confirm;
+
+//fire
+// window.Fire = new Vue(); //create a custom event
 
 Vue.component(
     "example-component",
