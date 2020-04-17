@@ -7,7 +7,7 @@
             <h3 class="card-title">Users</h3>
 
             <div class="card-tools">
-              <button class="btn btn-success" data-toggle="modal" data-target="#addNewModal">
+              <button class="btn btn-success" @click="newModal">
                 <i class="fas fa-user-plus"></i>
                 Add New
               </button>
@@ -34,7 +34,7 @@
                   <td>{{ user.type | upText }}</td>
                   <td>{{ user.created_at | formattedDate }}</td>
                   <td>
-                    <a href class="mr-3">
+                    <a href="#" class="mr-3" @click.prevent="editModal(user)">
                       <i class="fa fa-edit green"></i>
                     </a>
                     <a href="#" @click="deleteUser(user.id)">
@@ -62,13 +62,13 @@
     >
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="addNewModalLabel">Add New</h5>
+          <div class="modal-header" :class="editMode? 'bg-success' : 'bg-primary'">
+            <h5 class="modal-title" id="addNewModalLabel">{{editMode ?'Edit User Information': 'Add New'}}</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
-          <form @submit.prevent="createUser">
+          <form @submit.prevent="editMode ? updateUser() : createUser()">
             <div class="modal-body">
               <div class="form-group">
                 <input
@@ -93,9 +93,7 @@
                   name="email"
                   placeholder="Email"
                   class="form-control"
-                  :class="{
-                                        'is-invalid': form.errors.has('email')
-                                    }"
+                  :class="{'is-invalid': form.errors.has('email')}"
                 />
                 <has-error :form="form" field="email"></has-error>
               </div>
@@ -107,11 +105,9 @@
                   id="bio"
                   placeholder="Short bio (optional)"
                   class="form-control"
-                  :class="{
-                                        'is-invalid': form.errors.has('bio')
-                                    }"
+                  :class="{'is-invalid': form.errors.has('bio')}"
                 ></textarea>
-                <has-error :form="form" field="email"></has-error>
+                <has-error :form="form" field="bio"></has-error>
               </div>
 
               <div class="form-group">
@@ -147,7 +143,8 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="submit" class="btn btn-primary">Create</button>
+              <button v-show="editMode" type="submit" class="btn btn-success">Update</button>
+              <button v-show="!editMode" type="submit" class="btn btn-primary">Create</button>
             </div>
           </form>
         </div>
@@ -160,8 +157,10 @@
 export default {
   data() {
     return {
+      editMode: false,
       users: {},
       form: new Form({
+        id:'',
         name: "",
         email: "",
         password: "",
@@ -172,6 +171,34 @@ export default {
     };
   },
   methods: {
+    editModal(user){
+      this.editMode = true;
+      this.form.reset();
+       $("#addNewModal").modal("show");
+       this.form.fill(user);
+    },
+    updateUser(){
+      this.$Progress.start();
+      this.form.put('api/user/'+ this.form.id)
+      .then(()=>{
+        $("#addNewModal").modal("hide");
+        this.loadUsers();
+         Toast.fire({
+            icon: "success",
+            title: "User has been updated!"
+          });
+        this.$Progress.finish();
+      })
+      .catch(()=>{
+        this.$Progress.fail();
+      })
+    },
+    newModal(){
+      this.editMode = false;
+      this.form.clear();
+      this.form.reset();
+       $("#addNewModal").modal("show");
+    },
     deleteUser(id) {
       Confirm.fire({
         title: "Are you sure?",

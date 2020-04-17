@@ -11,6 +11,16 @@ use App\User;
 class UserController extends Controller
 {
     /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth:api');
+    }
+    
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
@@ -33,6 +43,7 @@ class UserController extends Controller
             'email'=>'required|string|email|unique:users',
             'password'=>'required|string|min:8',
             'type'=>'required',
+            'bio'=>'string|max:150',
         ]);
 
         return User::create([
@@ -56,6 +67,11 @@ class UserController extends Controller
         //
     }
 
+    public function profile()
+    {
+        return auth('api')->user();
+    }
+
     /**
      * Update the specified resource in storage.
      *
@@ -64,8 +80,19 @@ class UserController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
-    {
-        //
+    {   
+        $user = User::findOrFail($id);
+
+        $data = $this->validate($request,[
+            'name'=>'required|string|min:5',
+            'email'=>'required|string|email|unique:users,email,'.$user->id,
+            'password'=>'sometimes|string|min:8',
+            'type'=>'sometimes|required',
+            'bio'=>'string|max:150',
+        ]);
+
+        $user->update($data);
+        return ['message'=>'updated successfully'];
     }
 
     /**
