@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <div class="row mt-5">
+    <div class="row mt-5" v-if="$Gate.isAdmin()">
       <div class="col-12">
         <div class="card">
           <div class="card-header">
@@ -50,6 +50,10 @@
         <!-- /.card -->
       </div>
     </div>
+
+      <div v-if="!$Gate.isAdmin()">
+         <not-found></not-found>
+      </div>
 
     <!-- Modal -->
     <div
@@ -150,6 +154,7 @@
         </div>
       </div>
     </div>
+  
   </div>
 </template>
 
@@ -221,9 +226,9 @@ export default {
               });
               this.$Progress.finish();
             })
-            .catch(() => {
+            .catch((error) => {
               this.$Progress.fail();
-              Confirm.fire("Failed!", "Something was wrong", "error");
+              Confirm.fire("Failed!", "You're not authorized", "error");
             });
         } else if (
           /* Read more about handling dismissals below */
@@ -254,7 +259,9 @@ export default {
     },
 
     loadUsers() {
-      axios.get("api/user").then(({ data }) => (this.users = data.data));
+      if(this.$Gate.isAdmin()){
+        axios.get("api/user").then(({ data }) => (this.users = data.data));
+      }
     }
   },
   mounted() {

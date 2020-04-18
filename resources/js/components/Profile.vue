@@ -9,14 +9,14 @@
                 <h5 class="widget-user-desc text-left">Web Developer</h5>
               </div>
               <div class="widget-user-image">
-                <img class="img-circle" :src="'/imgs/'+ form.photo" alt="User Avatar">
+                <img class="img-circle" :src="getProfilePhoto" alt="User Avatar">
               </div>
               <div class="card-footer">
                 <div class="row">
                   <div class="col-sm-4 border-right">
                     <div class="description-block">
-                      <h5 class="description-header">3,200</h5>
-                      <span class="description-text">SALES</span>
+                      <h5 class="description-header">10,000,000</h5>
+                      <span class="description-text">NET WORTH</span>
                     </div>
                     <!-- /.description-block -->
                   </div>
@@ -32,7 +32,7 @@
                   <div class="col-sm-4">
                     <div class="description-block">
                       <h5 class="description-header">35</h5>
-                      <span class="description-text">PRODUCTS</span>
+                      <span class="description-text">PROJECTS</span>
                     </div>
                     <!-- /.description-block -->
                   </div>
@@ -55,7 +55,7 @@
             <div class="card card-primary card-outline">
               <div class="card-body box-profile">
                 <div class="text-center">
-                  <img class="profile-user-img img-fluid img-circle" src="/imgs/user.png" alt="User profile picture">
+                  <img class="profile-user-img img-fluid img-circle" :src="getProfilePhoto" alt="User profile picture">
                 </div>
 
                 <h3 class="profile-username text-center">{{form.name}}</h3>
@@ -136,7 +136,7 @@
                     <!-- Post -->
                     <div class="post">
                       <div class="user-block">
-                        <img class="img-circle img-bordered-sm" src="/imgs/user.png" alt="user image">
+                        <img class="img-circle img-bordered-sm" src="/imgs/profile/user.png" alt="user image">
                         <span class="username">
                           <a href="#">Jonathan Burke Jr.</a>
                           <a href="#" class="float-right btn-tool"><i class="fas fa-times"></i></a>
@@ -169,7 +169,7 @@
                     <!-- Post -->
                     <div class="post clearfix">
                       <div class="user-block">
-                        <img class="img-circle img-bordered-sm" :src="'/imgs/'+ form.photo" alt="User Image">
+                        <img class="img-circle img-bordered-sm" :src="'/imgs/profile/'+ form.photo" alt="User Image">
                         <span class="username">
                           <a href="#">Sarah Ross</a>
                           <a href="#" class="float-right btn-tool"><i class="fas fa-times"></i></a>
@@ -199,7 +199,7 @@
                     <!-- Post -->
                     <div class="post">
                       <div class="user-block">
-                        <img class="img-circle img-bordered-sm" src="/imgs/user.png" alt="User Image">
+                        <img class="img-circle img-bordered-sm" src="/imgs/profile/user.png" alt="User Image">
                         <span class="username">
                           <a href="#">Adam Jones</a>
                           <a href="#" class="float-right btn-tool"><i class="fas fa-times"></i></a>
@@ -274,8 +274,7 @@
                       <div class="form-group row">
                         <label for="photo" class="col-sm-2 col-form-label">Profile Photo</label>
                         <div class="col-sm-10">
-                          <input type="file" id="photo" :class="{'is-invalid': form.errors.has('photo')}" name="photo" >
-                          <has-error :form="form" field="photo"></has-error>
+                          <input type="file" id="photo" @change="updateProfile" name="photo" >
                         </div>
                       </div>
                       <div class="form-group">
@@ -285,7 +284,7 @@
                       </div>
                       <div class="form-group row">
                         <div class="col-sm-10">
-                          <button type="submit" class="btn btn-success">Update</button>
+                          <button @click.prevent="updateInfo" type="submit" class="btn btn-success">Update</button>
                         </div>
                       </div>
                     </form>
@@ -320,12 +319,56 @@ export default {
       })
     }
   },
-  mounted() {
+  methods:{
+    updateInfo(){
+      this.$Progress.start();
+      this.form.put('api/profile')
+      .then(()=>{
+        Toast.fire({
+          icon: "success",
+          title: "Profile updated successfully!"
+        });
+        Fire.$emit('GetData');
+        this.$Progress.finish();
+      })
+      .catch(()=>{
+        this.$Progress.fail();
+          Toast.fire({
+            icon: "error",
+            title: "Something went wrong"
+          });
+        });
+    },
+    updateProfile(e){
+      let file = e.target.files[0];
+      let reader = new FileReader();
+      if(file['size'] < 5111775){
+          reader.onloadend = (file)=> {
+          this.form.photo = reader.result;
+          }
+          reader.readAsDataURL(file);
+      }else{
+        Confirm.fire("Failed!", "Image is too big", "error");
+      }
+    }
+  },
+  created() {
+    this.getData();
+    Fire.$on('GetData',()=>{
+        this.getData()
+    })
+  },
+  computed:{
+    getProfilePhoto(){
+        return (this.form.photo.length > 200) ? this.form.photo : "/imgs/profile/"+this.form.photo;
+  },
+  getData(){
     axios.get('api/profile')
     .then(({data})=>{
-      this.form.fill(data)
-    });
+      this.form.fill(data);
+    })
   }
+}
 };
 </script>
 

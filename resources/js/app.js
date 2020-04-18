@@ -12,6 +12,8 @@ import VueRouter from "vue-router";
 import moment from "moment";
 import VueProgressBar from "vue-progressbar";
 import Swal from "sweetalert2";
+import Gate from "./Gate";
+Vue.prototype.$Gate = new Gate(window.user);
 
 //globals
 window.Form = Form;
@@ -80,7 +82,7 @@ const Confirm = Swal.mixin({
 window.Confirm = Confirm;
 
 //fire
-// window.Fire = new Vue(); //create a custom event
+window.Fire = new Vue(); //create a custom event
 
 
 
@@ -103,6 +105,10 @@ Vue.component(
 Vue.component(
     'passport-personal-access-tokens',
     require('./components/passport/PersonalAccessTokens.vue').default
+);
+Vue.component(
+    'not-found',
+    require('./components/404.vue').default
 );
 
 /**

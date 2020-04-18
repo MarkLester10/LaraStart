@@ -27,6 +27,7 @@ class UserController extends Controller
      */
     public function index()
     {
+        $this->authorize('isAdmin');
         return User::latest()->paginate(10);
     }
 
@@ -38,6 +39,7 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('isAdmin');
         $this->validate($request,[
             'name'=>'required|string|min:5',
             'email'=>'required|string|email|unique:users',
@@ -72,6 +74,39 @@ class UserController extends Controller
         return auth('api')->user();
     }
 
+    public function updateProfile(Request $request)
+    {
+        $user = auth('api')->user();
+        $this->validate($request,[
+            'name'=>'required|string|min:5',
+            'email'=>'required|string|email|unique:users,email,'.$user->id,
+            'password'=>'sometimes|required|string|min:8',
+            'bio'=>'string|max:150',
+        ]);
+
+        $currentPhoto = $user->photo;
+
+        if($request->photo != $currentPhoto){
+            $extension = explode('/', mime_content_type($request->photo))[1];
+            $name = time().'.'.$extension;
+            \Image::make($request->photo)->save(public_path('imgs/profile/').$name);
+            $request->merge(['photo'=>$name]);
+
+            $oldPhoto = public_path('imgs/profile/'.$user->photo);
+            if($user->photo != 'user.png' && file_exists($oldPhoto)){
+                @unlink($oldPhoto);
+            }
+        }
+
+        if(!empty($request->password)){
+            $request->merge(['password'=>Hash::make($request->password)]);
+        }
+
+        $user->update($request->all());
+
+        
+    }
+
     /**
      * Update the specified resource in storage.
      *
@@ -81,18 +116,17 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {   
+        $this->authorize('isAdmin');
         $user = User::findOrFail($id);
-
         $data = $this->validate($request,[
             'name'=>'required|string|min:5',
             'email'=>'required|string|email|unique:users,email,'.$user->id,
-            'password'=>'sometimes|string|min:8',
+            'password'=>'sometimes|required|string|min:8',
             'type'=>'sometimes|required',
             'bio'=>'string|max:150',
         ]);
 
         $user->update($data);
-        return ['message'=>'updated successfully'];
     }
 
     /**
@@ -103,6 +137,7 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
+        $this->authorize('isAdmin');
         $user = User::findOrFail($id);
         // $user->delete();
         $user->delete();
