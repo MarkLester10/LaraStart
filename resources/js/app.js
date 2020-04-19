@@ -16,10 +16,12 @@ import Gate from "./Gate";
 Vue.prototype.$Gate = new Gate(window.user);
 
 //globals
+window.Fire = new Vue(); //create a custom event
 window.Form = Form;
 window.Swal = Swal;
 Vue.component(HasError.name, HasError);
 Vue.component(AlertError.name, AlertError);
+Vue.component('pagination', require('laravel-vue-pagination'));
 Vue.use(VueRouter);
 
 //filters
@@ -42,7 +44,8 @@ let routes = [
         component: require("./components/Profile.vue").default
     },
     { path: "/users", component: require("./components/Users.vue").default },
-    { path: "/developer", component: require("./components/Developer.vue").default }
+    { path: "/developer", component: require("./components/Developer.vue").default },
+    { path: "*", component: require("./components/404.vue").default }
 ];
 
 const router = new VueRouter({
@@ -81,8 +84,7 @@ const Confirm = Swal.mixin({
 });
 window.Confirm = Confirm;
 
-//fire
-window.Fire = new Vue(); //create a custom event
+
 
 
 
@@ -119,5 +121,13 @@ Vue.component(
 
 const app = new Vue({
     el: "#app",
-    router
+    router,
+    data:{
+        search:""
+    }, 
+    methods:{
+        searchNow:_.debounce(()=>{
+            Fire.$emit('searching');
+        }, 1000)
+    }
 });

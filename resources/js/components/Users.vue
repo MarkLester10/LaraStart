@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <div class="row mt-5" v-if="$Gate.isAdmin()">
+    <div class="row mt-5" v-if="$Gate.isAdminOrAuthor()">
       <div class="col-12">
         <div class="card">
           <div class="card-header">
@@ -27,7 +27,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(user, index) in users" :key="user.id">
+                <tr v-for="(user, index) in users.data" :key="user.id">
                   <td>{{ index + 1 }}</td>
                   <td>{{ user.name }}</td>
                   <td>{{ user.email }}</td>
@@ -46,12 +46,16 @@
             </table>
           </div>
           <!-- /.card-body -->
+
+          <div class="card-footer">
+            <pagination :data="users" @pagination-change-page="getResults"></pagination>
+          </div>
         </div>
         <!-- /.card -->
       </div>
     </div>
 
-      <div v-if="!$Gate.isAdmin()">
+      <div v-if="!$Gate.isAdminOrAuthor()">
          <not-found></not-found>
       </div>
 
@@ -176,6 +180,12 @@ export default {
     };
   },
   methods: {
+       getResults(page=1){
+         axios.get('api/user?page=' + page)
+				.then(response => {
+					this.users = response.data;
+				});
+       },
     editModal(user){
       this.editMode = true;
       this.form.reset();
@@ -259,14 +269,33 @@ export default {
     },
 
     loadUsers() {
-      if(this.$Gate.isAdmin()){
-        axios.get("api/user").then(({ data }) => (this.users = data.data));
+      if(this.$Gate.isAdminOrAuthor()){
+        axios.get("api/user").then(({ data }) => (this.users = data));
       }
     }
   },
+
   mounted() {
+    Fire.$on('searching', ()=>{
+      let query=this.$parent.search;
+      if(query.length < 1){
+        this.loadUsers();
+      }else{
+      axios.get('api/findUser?q=' + query)
+      .then((data)=>{
+        this.users = data.data;
+      })
+      .catch(()=>{
+        Toast.fire({
+            icon: "error",
+            title: "Something went wrong"
+          });
+      });
+      }
+     
+    });
     this.loadUsers();
     // Fire.$on("AfterCreate", () => this.loadUsers());
   }
-};
+}
 </script>
